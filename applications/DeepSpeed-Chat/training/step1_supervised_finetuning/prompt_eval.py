@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # DeepSpeed Team
+import sys
+sys.path.append("/home/ubuntu/code/applications/DeepSpeed-Chat")
 import argparse
 import logging
 import torch
@@ -206,13 +208,13 @@ def main():
     model_baseline = create_hf_model(AutoModelForCausalLM,
                                      args.model_name_or_path_baseline,
                                      tokenizer, None)
-    model_fintuned = create_hf_model(AutoModelForCausalLM,
-                                     args.model_name_or_path_finetune,
-                                     tokenizer, None)
+    # model_fintuned = create_hf_model(AutoModelForCausalLM,
+    #                                  args.model_name_or_path_finetune,
+    #                                  tokenizer, None)
 
     model_baseline.to(device)
-    model_fintuned.to(device)
-
+    # model_fintuned.to(device)
+    print("<>"*10)
     # One observation: if the prompt ends with a space " ", there is a high chance that
     # the original model (without finetuning) will stuck and produce no response.
     # Finetuned models have less such issue. Thus following prompts all end with ":"

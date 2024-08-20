@@ -88,7 +88,8 @@ def get_eval_ds_config(offload, dtype, stage=0):
         "stage": stage,
         "stage3_param_persistence_threshold": 1e4,
         "offload_param": {
-            "device": device
+            "device": device, 
+            "nvme_path": "/data/param"
         },
         "memory_efficient_linear": False
     }
@@ -100,5 +101,7 @@ def get_eval_ds_config(offload, dtype, stage=0):
         data_type: dtype_config,
         "gradient_clipping": 1.0,
         "prescale_gradients": False,
-        "wall_clock_breakdown": False
+        "wall_clock_breakdown": False, 
+        "max_tokens": 2000, 
+        "max_out_tokens": 2000
     }

@@ -7,7 +7,7 @@ import torch
 
 
 # This function can be used to print throughput for Step 1 and 2 only
-def print_throughput(hf_model, args, e2e_time, rank=0):
+def print_throughput(hf_model, args, e2e_time, rank=0, stag_val=0, patience=0):
     if rank <= 0:
         hf_config = hf_model.config
         num_layers, hidden_size, vocab_size = get_hf_configs(hf_config)
@@ -36,7 +36,7 @@ def print_throughput(hf_model, args, e2e_time, rank=0):
 
         param_string = f"{params_in_billions:.3f} B" if params_in_billions != 0 else "NA"
         print(
-            f"Model Parameters: {param_string}, Latency: {e2e_time:.2f}s, TFLOPs: {train_tflops:.2f}, Samples/sec: {samples_per_second:.2f}, Time/seq {e2e_time/batch_size:.2f}s, Batch Size: {batch_size}, Sequence Length: {seq_length}"
+            f"Model Parameters: {param_string}, Latency: {e2e_time:.2f}s, TFLOPs: {train_tflops:.2f}, Samples/sec: {samples_per_second:.2f}, Time/seq {e2e_time/batch_size:.2f}s, Batch Size: {batch_size}, Sequence Length: {seq_length}, stagnance at: {stag_val}, patience at: {patience}"
         )
 
 

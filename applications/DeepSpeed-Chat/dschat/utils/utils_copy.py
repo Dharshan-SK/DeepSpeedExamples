@@ -197,12 +197,8 @@ def load_state_dict_into_model(model_to_load=None,
         for name, child in module._modules.items():
             if child is not None:
                 load(child, state_dict, prefix + name + ".")
-    if zero_stage > 0:
-        with deepspeed.zero.Init(module=model_to_load, remote_device="cpu" if zero_stage == 3 else "cuda"):
-            load(model_to_load, state_dict, prefix=start_prefix)
-    else:
-        load(model_to_load, state_dict, prefix=start_prefix) 
-    # load(model_to_load, state_dict, prefix=start_prefix)
+
+    load(model_to_load, state_dict, prefix=start_prefix)
     # Delete `state_dict` so it could be collected by GC earlier. Note that `state_dict` is a copy of the argument, so
     # it's safe to delete it.
     del state_dict

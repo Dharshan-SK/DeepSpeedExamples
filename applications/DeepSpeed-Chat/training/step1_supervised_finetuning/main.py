@@ -3,6 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # DeepSpeed Team
+import sys
+sys.path.append("/home/ubuntu/code/applications/DeepSpeed-Chat")
 import argparse
 import math
 
@@ -27,7 +29,7 @@ from dschat.utils.ds_utils import get_train_ds_config
 from dschat.utils.module.lora import convert_linear_layer_to_lora, convert_lora_to_linear_layer, only_optimize_lora_parameters, make_model_gradient_checkpointing_compatible
 from dschat.utils.model.model_utils import create_hf_model, causal_lm_model_to_fp32_loss
 from dschat.utils.perf import print_throughput
-
+from tqdm import tqdm
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -345,18 +347,21 @@ def main():
     perplexity, eval_loss = evaluation(model, eval_dataloader)
     print_rank_0(f"ppl: {perplexity}, loss: {eval_loss}", args.global_rank)
 
+    patience_counter = 0
+    stagnant_value = 0
+
     for epoch in range(args.num_train_epochs):
         print_rank_0(
             f"Beginning of Epoch {epoch+1}/{args.num_train_epochs}, Total Micro Batches {len(train_dataloader)}",
             args.global_rank)
         model.train()
         import time
-        for step, batch in enumerate(train_dataloader):
+        for step, batch in tqdm(enumerate(train_dataloader)):
             start = time.time()
             batch = to_device(batch, device)
             outputs = model(**batch, use_cache=False)
             loss = outputs.loss
-            if args.print_loss:
+            if True:
                 print(
                     f"Epoch: {epoch}, Step: {step}, Rank: {torch.distributed.get_rank()}, loss = {loss}"
                 )
@@ -365,15 +370,24 @@ def main():
             end = time.time()
             if torch.distributed.get_rank() == 0:
                 print_throughput(model.model, args, end - start,
-                                 args.global_rank)
+                                 args.global_rank, stagnant_value, patience_counter)
+                if abs(stagnant_value-loss)>stagnant_value*0.01:
+                    stagnant_value = loss
+                    patience_counter=0
+                else:
+                    patience_counter+=1
+            
+                if patience_counter>50 or loss<0.006 :
+                    break
+
 
         # Evaluate perplexity on the validation set.
         print_rank_0(
             f"***** Evaluating perplexity, Epoch {epoch+1}/{args.num_train_epochs} *****",
             args.global_rank)
-        perplexity, eval_loss = evaluation(model, eval_dataloader)
-        print_rank_0(f"ppl: {perplexity}, loss: {eval_loss}", args.global_rank)
-        model.tput_timer.update_epoch_count()
+        # perplexity, eval_loss = evaluation(model, eval_dataloader)
+        # print_rank_0(f"ppl: {perplexity}, loss: {eval_loss}", args.global_rank)
+        # model.tput_timer.update_epoch_count()
 
     if args.output_dir is not None:
         print_rank_0('saving the final model ...', args.global_rank)

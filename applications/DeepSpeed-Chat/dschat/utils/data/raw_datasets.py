@@ -145,6 +145,50 @@ class DahoasSyntheticinstructgptjpairwiseDataset(PromptRawDataset):
         return " " + sample['rejected']
 
     def get_prompt_and_chosen(self, sample):
+        return " Human: " + sample['prompt'] + " Assistant: " + "THIS IS A DUMMB PROMPT"
+
+    def get_prompt_and_rejected(self, sample):
+        return " Human: " + sample['prompt'] + " Assistant: " + sample[
+            'rejected']
+
+
+class CustomRawDataset(PromptRawDataset):
+
+    def __init__(self, output_path, seed, local_rank, dataset_name):
+        super().__init__(output_path, seed, local_rank, dataset_name)
+        self.dataset_name = "CustomRawDataset"
+        self.dataset_name_clean = "CustomRawDataset"
+
+    def get_train_data(self):
+        from .data_utils import get_raw_dataset_split_index
+        dataset = self.raw_datasets["train"]
+        index = get_raw_dataset_split_index(self.local_rank, self.output_path,
+                                            self.dataset_name_clean,
+                                            self.seed, "train_eval", "9,1", 0,
+                                            len(dataset))
+        dataset = Subset(dataset, index)
+        return dataset
+
+    def get_eval_data(self):
+        from .data_utils import get_raw_dataset_split_index
+        dataset = self.raw_datasets["train"]
+        index = get_raw_dataset_split_index(self.local_rank, self.output_path,
+                                            self.dataset_name_clean,
+                                            self.seed, "train_eval", "9,1", 1,
+                                            len(dataset))
+        dataset = Subset(dataset, index)
+        return dataset
+
+    def get_prompt(self, sample):
+        return " Human: " + sample['prompt'] + " Assistant:"
+
+    def get_chosen(self, sample):
+        return " " + sample['chosen']
+
+    def get_rejected(self, sample):
+        return " " + sample['rejected']
+
+    def get_prompt_and_chosen(self, sample):
         return " Human: " + sample['prompt'] + " Assistant: " + sample['chosen']
 
     def get_prompt_and_rejected(self, sample):
